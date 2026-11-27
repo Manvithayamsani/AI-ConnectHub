@@ -1,0 +1,43 @@
+
+name: AI ConnectHub CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t aiconnecthub-backend .
+
+      - name: Run automated tests
+        run: |
+          docker run --rm aiconnecthub-backend \
+          .venv/bin/python -m pytest \
+          test_github_connector.py -v
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: |
+          docker build \
+          -t aiconnecthub-frontend ./frontend

@@ -1,126 +1,124 @@
-# MCP Python SDK
 
-<div align="center">
+# AI ConnectHub
 
-<strong>Python implementation of the Model Context Protocol (MCP)</strong>
+An AI-powered integration platform that connects
+external data sources to AI assistants using the
+Model Context Protocol (MCP).
 
-[![PyPI][pypi-badge]][pypi-url]
-[![MIT licensed][mit-badge]][mit-url]
-[![Python Version][python-badge]][python-url]
-[![Documentation][docs-badge]][docs-url]
-[![Protocol][protocol-badge]][protocol-url]
-[![Specification][spec-badge]][spec-url]
+## Features
 
-</div>
+- Interactive React dashboard
+- GitHub REST API integration
+- GitHub OAuth 2.0 authentication
+- Delegated OAuth credentials through MCP
+- Dynamic MCP tool discovery
+- Schema-driven tool execution
+- Natural-language AI assistant using Groq
+- Session-based authentication
+- Tool execution monitoring and activity logs
+- API error handling and bounded retries
+- Automated unit testing
+- Docker containerization
+- GitHub Actions continuous integration
 
-## Documentation
+## Technology Stack
 
-**The documentation lives at <https://py.sdk.modelcontextprotocol.io/>.**
+Frontend:
+React, Vite, Axios, Lucide React
 
-It has a [Get started guide](https://py.sdk.modelcontextprotocol.io/get-started/), [What's new in v2](https://py.sdk.modelcontextprotocol.io/whats-new/), the [API reference](https://py.sdk.modelcontextprotocol.io/api/mcp/), and the [migration guide](https://py.sdk.modelcontextprotocol.io/migration/).
+Backend:
+Python, FastAPI
 
-## What is MCP?
+AI and Integration:
+Model Context Protocol, Groq, GitHub REST API
 
-The [Model Context Protocol](https://modelcontextprotocol.io) lets you build servers that expose data and functionality to LLM applications in a secure, standardized way. Think of it like a web API, but designed for LLM interactions. With this SDK you can:
+Security:
+OAuth 2.0, CSRF state validation, session management,
+server-side token storage, tool allowlisting
 
-- **Build MCP servers** that expose tools, resources, and prompts to any MCP host
-- **Build MCP clients** that connect to any MCP server
-- Speak every standard transport: stdio, Streamable HTTP, and SSE
+DevOps:
+Docker, Docker Compose, GitHub Actions, Pytest
 
-## Requirements
+## Architecture
 
-Python 3.11+.
+React Dashboard
+    |
+FastAPI API Gateway
+    |
+MCP Client
+    |
+MCP Server
+    |
+GitHub REST API
 
-## Installation
+The AI assistant uses Groq function calling to
+dynamically select and execute MCP tools.
 
-```bash
-uv add "mcp[cli]"      # or: pip install "mcp[cli]"
-```
+## Available MCP Tools
 
-The `cli` extra adds the `mcp` command-line tool (`mcp dev`, `mcp run`, `mcp install`) on top of the SDK; install plain `mcp` if you don't need it. For one-off commands, `uv run --with "mcp[cli]" mcp ...` works without a project.
+- get_repository
+- list_repositories
+- get_issues
+- get_authenticated_user
 
-## A server in 15 lines
+## Local Installation
 
-Create a `server.py`:
+1. Clone the repository.
+2. Copy .env.example to .env.
+3. Configure GitHub OAuth and Groq credentials.
+4. Start Docker Desktop.
+5. Run:
 
-<!-- snippet-source docs_src/index/tutorial001.py -->
-```python
-from mcp.server import MCPServer
+   docker compose up --build -d
 
-mcp = MCPServer("Demo")
+## Application URLs
 
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
 
-@mcp.tool()
-def add(a: int, b: int) -> int:
-    """Add two numbers."""
-    return a + b
+## Automated Testing
 
+Run:
 
-@mcp.resource("greeting://{name}")
-def greeting(name: str) -> str:
-    """Greet someone by name."""
-    return f"Hello, {name}!"
-```
+    docker compose exec backend .venv/bin/python -m pytest test_github_connector.py -v
 
-_Full example: [docs_src/index/tutorial001.py](https://github.com/modelcontextprotocol/python-sdk/blob/main/docs_src/index/tutorial001.py)_
-<!-- /snippet-source -->
+Test coverage includes:
 
-That's a complete MCP server: one tool, one templated resource. Open it in the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+- Successful API requests
+- Resource-not-found handling
+- API rate-limit detection
+- Connection failures and retry behaviour
 
-```bash
-uv run mcp dev server.py
-```
+All four unit tests passed in Windows and Linux
+Docker environments.
 
-Call `add` with `a=1`, `b=2` and you get `3` back.
+## Security and Data Privacy
 
-Notice what you did **not** write: no JSON Schema (`a: int, b: int` _is_ the schema), no request parsing, no validation code, no protocol handling. Two type-hinted Python functions and a docstring.
+- Credentials are stored in environment variables.
+- OAuth access tokens remain on the backend.
+- MCP tools are restricted to approved operations.
+- Repository retrieval is limited to public data.
+- Sensitive credentials are excluded from activity logs.
 
-[Get started](https://py.sdk.modelcontextprotocol.io/get-started/) takes it from here.
+## Current Limitations
 
-## A client in 10 lines
+- Session and activity data are stored in memory.
+- Application is configured for local deployment.
+- Comprehensive production security testing is pending.
+- AI requests are processed independently.
+- Continuous integration is configured but requires
+  verification on GitHub.
 
-The same package is a full MCP **client**. Serve `server.py` over HTTP:
+## Attribution
 
-```bash
-uv run mcp run server.py --transport streamable-http
-```
+This project extends the official MCP Python SDK:
 
-then point a `Client` at it:
+https://github.com/modelcontextprotocol/python-sdk
 
-```python
-import asyncio
+AI ConnectHub adds a custom React dashboard,
+FastAPI integration layer, GitHub connectors,
+delegated OAuth, AI assistant, activity monitoring,
+unit tests and Docker configuration.
 
-from mcp import Client
-
-
-async def main() -> None:
-    async with Client("http://localhost:8000/mcp") as client:
-        result = await client.call_tool("add", {"a": 1, "b": 2})
-        print(result.structured_content)  # {'result': 3}
-
-
-asyncio.run(main())
-```
-
-A URL means Streamable HTTP, the transport you deploy. `Client` can also launch a local server as a stdio subprocess or take any custom transport; [Clients](https://py.sdk.modelcontextprotocol.io/client/) has the rest.
-
-## Contributing
-
-We are passionate about supporting contributors of all levels of experience and would love to see you get involved in the project. See the [contributing guide](https://github.com/modelcontextprotocol/python-sdk/blob/main/CONTRIBUTING.md) to get started.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/modelcontextprotocol/python-sdk/blob/main/LICENSE) file for details.
-
-[pypi-badge]: https://img.shields.io/pypi/v/mcp.svg
-[pypi-url]: https://pypi.org/project/mcp/
-[mit-badge]: https://img.shields.io/pypi/l/mcp.svg
-[mit-url]: https://github.com/modelcontextprotocol/python-sdk/blob/main/LICENSE
-[python-badge]: https://img.shields.io/pypi/pyversions/mcp.svg
-[python-url]: https://www.python.org/downloads/
-[docs-badge]: https://img.shields.io/badge/docs-python--sdk-blue.svg
-[docs-url]: https://py.sdk.modelcontextprotocol.io/
-[protocol-badge]: https://img.shields.io/badge/protocol-modelcontextprotocol.io-blue.svg
-[protocol-url]: https://modelcontextprotocol.io
-[spec-badge]: https://img.shields.io/badge/spec-spec.modelcontextprotocol.io-blue.svg
-[spec-url]: https://modelcontextprotocol.io/specification/latest
+The original SDK license and attribution are retained.
